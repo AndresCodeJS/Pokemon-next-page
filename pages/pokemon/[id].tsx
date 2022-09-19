@@ -7,8 +7,8 @@ import confetti from "canvas-confetti";
 
 import { Layout } from "../../components/layouts";
 import { toggleFavorites, isInFavorites } from "../../utils";
-import { getPokemonData } from '../../utils/GetPokemonData';
-import { Props,PokemonDetails } from '../../interfaces';
+import { getPokemonData } from "../../utils/GetPokemonData";
+import { Props, PokemonDetails, GetPokemonData } from "../../interfaces";
 
 const PokemonPage: NextPage<Props> = ({
   id,
@@ -113,20 +113,29 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
     params: { id: `${index + 1}` },
   }));
 
-
-
   return {
     paths: pokemons151,
-    fallback: false,
+    fallback: 'blocking',
   };
 };
 
-export const getStaticProps: GetStaticProps = async ({
-  params,
-}): Promise<PokemonDetails> => {
+export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { id } = params as { id: string };
 
-  return await getPokemonData(id)
-};
+  const { pokemon }: GetPokemonData = await getPokemonData(id);
 
+  if (!pokemon) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: pokemon,
+    revalidate: 86400, // The Page will be regenerated each 24 hours
+  };
+};
 export default PokemonPage;

@@ -11,19 +11,13 @@ import { Layout } from "../../components/layouts";
 import { toggleFavorites, isInFavorites } from "../../utils";
 import { getPokemonData } from "../../utils/GetPokemonData";
 
-import { PokemonListResponse, PokemonDetails, Props } from "../../interfaces";
+import { GetPokemonData, PokemonListResponse, Props } from "../../interfaces";
 
 interface PokemonName {
   params: { name: string };
 }
 
-const PokemonPageName: NextPage<Props> = ({
-  id,
-  name,
-  abilities,
-  image,
-  sprites,
-}) => {
+const PokemonPageName: NextPage<Props> = ({ id, name, image, sprites }) => {
   const [isFavorite, setIsFavorite] = useState<Boolean>(false);
 
   const toggleClick = (): void => {
@@ -126,16 +120,28 @@ export const getStaticPaths: GetStaticPaths = async (ctx) => {
 
   return {
     paths: pokemons,
-    fallback: false,
+    fallback: 'blocking',
   };
 };
 
-export const getStaticProps: GetStaticProps = async ({
-  params,
-}): Promise<PokemonDetails> => {
+export const getStaticProps: GetStaticProps = async ({ params }) => {
   const { name } = params as { name: string };
 
-  return await getPokemonData(name);
+  const {pokemon}: GetPokemonData= await getPokemonData(name);
+
+  if (!pokemon) {
+    return {
+      redirect: {
+        destination: "/",
+        permanent: false,
+      },
+    };
+  }
+
+  return {
+    props: pokemon,
+    revalidate: 86400, // The Page will be regenerated each 24 hours
+  };
 };
 
 export default PokemonPageName;
